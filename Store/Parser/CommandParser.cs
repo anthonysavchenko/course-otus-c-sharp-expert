@@ -4,7 +4,7 @@ namespace Store.Parser;
 
 public static class CommandParser
 {
-  private static readonly byte[] _separator = Encoding.UTF8.GetBytes([' ']);
+  private static readonly byte[] _separator = Encoding.Unicode.GetBytes([' ']);
 
   public static ParsedRequest ParseRequest(ReadOnlySpan<byte> source)
   {
@@ -27,14 +27,18 @@ public static class CommandParser
   {
     if (source.IsEmpty) return new SlicedFirstToken(firstToken: [], rest: []);
 
-    var separatorIndex = source.IndexOf(_separator);
+    var separatorStartIndex = source.IndexOf(_separator);
 
-    if (separatorIndex == -1) return new SlicedFirstToken(firstToken: source, rest: []);
+    if (separatorStartIndex == -1) return new SlicedFirstToken(firstToken: source, rest: []);
 
-    var slice = source[..separatorIndex];
-    var rest = source[(separatorIndex + 1)..];
+    var firstToken = source[..separatorStartIndex];
+    var restStartIndex = separatorStartIndex + _separator.Length;
 
-    var slicedFirstToken = new SlicedFirstToken(slice, rest);
+    if (restStartIndex == source.Length) return new SlicedFirstToken(firstToken, rest: []);
+
+    var rest = source[restStartIndex..];
+
+    var slicedFirstToken = new SlicedFirstToken(firstToken, rest);
 
     return slicedFirstToken;
   }
