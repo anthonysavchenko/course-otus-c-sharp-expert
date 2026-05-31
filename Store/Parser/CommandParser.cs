@@ -6,9 +6,9 @@ public static class CommandParser
 {
   private static readonly byte[] _separator = Encoding.Unicode.GetBytes([' ']);
 
-  public static ParsedRequest ParseRequest(ReadOnlySpan<byte> source)
+  public static ParsedRequest ParseBytes(ReadOnlySpan<byte> bytes)
   {
-    var parsedCommand = SliceFirstToken(source);
+    var parsedCommand = SliceFirstToken(bytes);
     var parsedKey = SliceFirstToken(parsedCommand.Rest);
     var parsedValue = SliceFirstToken(parsedKey.Rest);
 
@@ -23,20 +23,20 @@ public static class CommandParser
     return parsedRequest;
   }
 
-  private static SlicedFirstToken SliceFirstToken(ReadOnlySpan<byte> source)
+  private static SlicedFirstToken SliceFirstToken(ReadOnlySpan<byte> bytes)
   {
-    if (source.IsEmpty) return new SlicedFirstToken(firstToken: [], rest: []);
+    if (bytes.IsEmpty) return new SlicedFirstToken(firstToken: [], rest: []);
 
-    var separatorStartIndex = source.IndexOf(_separator);
+    var separatorStartIndex = bytes.IndexOf(_separator);
 
-    if (separatorStartIndex == -1) return new SlicedFirstToken(firstToken: source, rest: []);
+    if (separatorStartIndex == -1) return new SlicedFirstToken(firstToken: bytes, rest: []);
 
-    var firstToken = source[..separatorStartIndex];
+    var firstToken = bytes[..separatorStartIndex];
     var restStartIndex = separatorStartIndex + _separator.Length;
 
-    if (restStartIndex == source.Length) return new SlicedFirstToken(firstToken, rest: []);
+    if (restStartIndex == bytes.Length) return new SlicedFirstToken(firstToken, rest: []);
 
-    var rest = source[restStartIndex..];
+    var rest = bytes[restStartIndex..];
 
     var slicedFirstToken = new SlicedFirstToken(firstToken, rest);
 
