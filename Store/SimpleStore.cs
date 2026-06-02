@@ -8,8 +8,12 @@ public class SimpleStore
   public void Set(string key, byte[] value)
   {
     _lock.EnterWriteLock();
+
     try
     {
+      if (string.IsNullOrEmpty(key)) return;
+      if (value == null || value.Length == 0) return;
+
       _storage[key] = value;
     }
     finally
@@ -21,8 +25,11 @@ public class SimpleStore
   public byte[]? Get(string key)
   {
     _lock.EnterReadLock();
+
     try
     {
+      if (string.IsNullOrEmpty(key)) return null;
+
       return _storage.GetValueOrDefault(key);
     }
     finally
@@ -34,8 +41,11 @@ public class SimpleStore
   public void Delete(string key)
   {
     _lock.EnterWriteLock();
+
     try
     {
+      if (string.IsNullOrEmpty(key)) return;
+
       _storage.Remove(key);
     }
     finally

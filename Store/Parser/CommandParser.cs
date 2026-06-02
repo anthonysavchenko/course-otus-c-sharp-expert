@@ -37,7 +37,6 @@ public static class CommandParser
     if (restStartIndex == bytes.Length) return new SlicedFirstToken(firstToken, rest: []);
 
     var rest = bytes[restStartIndex..];
-
     var slicedFirstToken = new SlicedFirstToken(firstToken, rest);
 
     return slicedFirstToken;
