@@ -104,5 +104,4 @@ public class SimpleStoreTests
   private static byte[] GetBytes(string requestString) => Encoding.Unicode.GetBytes(requestString);
 
   private static string GetString(ReadOnlySpan<byte> bytes) => Encoding.Unicode.GetString(bytes);
-
 }
