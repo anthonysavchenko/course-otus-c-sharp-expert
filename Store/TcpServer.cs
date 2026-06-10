@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Store.Parser;
 
 namespace Store;
@@ -23,6 +24,9 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
       serverSocket.Bind(_endPoint);
       serverSocket.Listen();
 
+      Console.WriteLine($"Server {_endPoint}. Started");
+      Console.WriteLine($"Client message min bytes for ArrayPool: {_clientMessageMinBytes}");
+
       await WaitAndProcessClientsAsync(serverSocket, cancellationToken);
     }
     catch (Exception e) when (e is not OperationCanceledException)
@@ -33,9 +37,9 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 
   private async Task WaitAndProcessClientsAsync(Socket serverSocket, CancellationToken cancellationToken = default)
   {
-    while (true)
+    try
     {
-      try
+      while (true)
       {
         var clientSocket = await serverSocket.AcceptAsync(cancellationToken);
 
@@ -43,18 +47,19 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 
         _ = ProcessClientAsync(clientSocket, cancellationToken);
       }
-      catch (OperationCanceledException)
-      {
-        serverSocket.Shutdown(SocketShutdown.Both);
-        serverSocket.Close();
-      }
+    }
+    catch (OperationCanceledException)
+    {
+      if (serverSocket.Connected) serverSocket.Shutdown(SocketShutdown.Both);
+      serverSocket.Close();
+      Console.WriteLine($"Server {_endPoint}. Closed");
     }
   }
 
   private async Task ProcessClientAsync(Socket clientSocket, CancellationToken cancellationToken = default)
   {
     using (clientSocket)
-
+    {
       try
       {
         while (true)
@@ -66,9 +71,10 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
           {
             var request = CommandParser.ParseBytes(buffer);
 
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received command {request.Command.ToString()}");
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received command {request.Command.ToString()}");
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received command {request.Command.ToString()}");
+            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Buffer: {Encoding.Unicode.GetString(buffer)}");
+            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
+            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
+            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
           }
 
           ArrayPool<byte>.Shared.Return(buffer);
@@ -86,6 +92,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
         clientSocket.Close();
         Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Disconnected");
       }
+    }
   }
 
   private async Task<ReadOnlyMemory<byte>> ReadDataFromSocket(TcpClient client)
