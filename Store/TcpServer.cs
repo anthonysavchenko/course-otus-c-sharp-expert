@@ -6,8 +6,9 @@ using Store.Parser;
 
 namespace Store;
 
-// TODO: перенести serverSocket в поле класса и вынести ServerSocketInit
+// TODO: перенести serverSocket в поле класса, реализовать IDisposabel и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
+// TODO: передвавать в сообщениях размер данных, чтобы ограничивать их в буфере при чтении
 
 public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 {
@@ -29,7 +30,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 
       await WaitAndProcessClientsAsync(serverSocket, cancellationToken);
     }
-    catch (Exception e) when (e is not OperationCanceledException)
+    catch (Exception e)
     {
       Console.WriteLine($"Server {_endPoint}. Exception occured: {e}");
     }
@@ -39,11 +40,11 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
   {
     try
     {
-      while (true)
+      while (!cancellationToken.IsCancellationRequested)
       {
         var clientSocket = await serverSocket.AcceptAsync(cancellationToken);
 
-        Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Connected");
+        Console.WriteLine($"Client {clientSocket.RemoteEndPoint}. Connected");
 
         _ = ProcessClientAsync(clientSocket, cancellationToken);
       }
@@ -62,41 +63,55 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
     {
       try
       {
-        while (true)
+        while (!cancellationToken.IsCancellationRequested)
         {
-          var buffer = ArrayPool<byte>.Shared.Rent(_clientMessageMinBytes);
-          var bytesReceived = await clientSocket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken);
-
-          if (bytesReceived != 0)
-          {
-            var request = CommandParser.ParseBytes(buffer);
-
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Buffer: {Encoding.Unicode.GetString(buffer)}");
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
-            Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
-          }
-
-          ArrayPool<byte>.Shared.Return(buffer);
+          var bytesReceived = await WaitAndProcessClientMessageAsync(clientSocket, cancellationToken);
 
           if (bytesReceived == 0) break;
         }
       }
       catch (Exception e) when (e is not OperationCanceledException)
       {
-        Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Exception occured {e}");
+        Console.WriteLine($"Client {clientSocket.RemoteEndPoint}. Exception occured {e}");
       }
       finally
       {
+        var clientEndPoint = clientSocket.RemoteEndPoint;
+
         clientSocket.Shutdown(SocketShutdown.Both);
         clientSocket.Close();
-        Console.WriteLine($"Client {clientSocket.LocalEndPoint}. Disconnected");
+        Console.WriteLine($"Client {clientEndPoint}. Disconnected");
       }
     }
   }
 
-  private async Task<ReadOnlyMemory<byte>> ReadDataFromSocket(TcpClient client)
+  private async Task<int> WaitAndProcessClientMessageAsync(Socket clientSocket, CancellationToken cancellationToken = default)
   {
-    return new ReadOnlyMemory<byte>();
+    var buffer = ArrayPool<byte>.Shared.Rent(_clientMessageMinBytes);
+
+    try
+    {
+      var bytesReceived = await clientSocket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken);
+
+      if (bytesReceived != 0)
+      {
+        ProcessClientMessage(buffer, clientSocket.RemoteEndPoint);
+      }
+
+      return bytesReceived;
+    }
+    finally
+    {
+      ArrayPool<byte>.Shared.Return(buffer);
+    }
+  }
+
+  private static void ProcessClientMessage(byte[] message, EndPoint? clientEndPoint)
+  {
+    var request = CommandParser.ParseBytes(message);
+
+    Console.WriteLine($"Client {clientEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
+    Console.WriteLine($"Client {clientEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
+    Console.WriteLine($"Client {clientEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
   }
 }
