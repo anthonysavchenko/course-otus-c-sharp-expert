@@ -106,9 +106,9 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
     }
   }
 
-  private static void ProcessClientMessage(byte[] message, EndPoint? clientEndPoint)
+  private static void ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
   {
-    var request = CommandParser.ParseBytes(message);
+    var request = CommandParser.ParseBytes(message.Span);
 
     Console.WriteLine($"Client {clientEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
     Console.WriteLine($"Client {clientEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");

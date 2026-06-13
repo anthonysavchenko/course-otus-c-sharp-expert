@@ -60,7 +60,7 @@ public class TcpServerTests
     await SendFromClient(message, serverEndPoint, cancellationToken);
 
     // Ждем перед завершением работы сервера, чтобы он успевал обработать данные клиента
-    await Task.Delay(3000);
+    await Task.Delay(1000);
 
     await cancellationTokenSource.CancelAsync();
 
