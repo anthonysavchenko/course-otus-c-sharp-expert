@@ -8,7 +8,6 @@ namespace Store;
 
 // TODO: перенести serverSocket в поле класса, реализовать IDisposabel и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
-// TODO: передвавать в сообщениях размер данных, чтобы ограничивать их в буфере при чтении
 
 public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 {
@@ -95,7 +94,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 
       if (bytesReceived != 0)
       {
-        ProcessClientMessage(buffer, clientSocket.RemoteEndPoint);
+        ProcessClientMessage(buffer.AsMemory(0, bytesReceived), clientSocket.RemoteEndPoint);
       }
 
       return bytesReceived;
