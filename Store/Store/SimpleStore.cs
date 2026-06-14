@@ -14,59 +14,76 @@ public class SimpleStore
 
   public void Set(string key, byte[] value)
   {
-    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
-    if (value == null || value.Length == 0) throw new EmptyArgumentException(nameof(value));
+    CheckIsNullOrEmpty(key, nameof(key));
+    CheckIsNullOrEmpty(value, nameof(value));
 
+    void Writer() => _storage[key] = value;
+
+    WriteLocked(Writer);
+
+    Interlocked.Increment(ref _setCount);
+  }
+
+  static void CheckIsNullOrEmpty(string param, string paramName)
+  {
+    if (string.IsNullOrEmpty(param)) throw new EmptyArgumentException(paramName);
+  }
+
+  static void CheckIsNullOrEmpty(byte[] param, string paramName)
+  {
+    if (param == null || param.Length == 0) throw new EmptyArgumentException(paramName);
+  }
+
+  private void WriteLocked(Action writer)
+  {
     _lock.EnterWriteLock();
 
     try
     {
-      _storage[key] = value;
+      writer.Invoke();
     }
     finally
     {
       _lock.ExitWriteLock();
     }
-
-    Interlocked.Increment(ref _setCount);
   }
 
   public byte[]? Get(string key)
   {
-    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
+    CheckIsNullOrEmpty(key, nameof(key));
 
-    _lock.EnterReadLock();
+    var value = (byte[]?)null;
 
-    byte[]? value;
+    void Reader() => value = _storage.GetValueOrDefault(key);
 
-    try
-    {
-      value = _storage.GetValueOrDefault(key);
-    }
-    finally
-    {
-      _lock.ExitReadLock();
-    }
+    ReadLocked(Reader);
 
     Interlocked.Increment(ref _getCount);
 
     return value;
   }
 
-  public void Delete(string key)
+  private void ReadLocked(Action reader)
   {
-    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
-
-    _lock.EnterWriteLock();
+    _lock.EnterReadLock();
 
     try
     {
-      _storage.Remove(key);
+      reader.Invoke();
     }
     finally
     {
-      _lock.ExitWriteLock();
+      _lock.ExitReadLock();
     }
+  }
+
+  public void Delete(string key)
+  {
+    CheckIsNullOrEmpty(key, nameof(key));
+
+    void Writer() => _storage.Remove(key);
+
+    WriteLocked(Writer);
 
     Interlocked.Increment(ref _deleteCount);
   }
