@@ -14,7 +14,7 @@ public class SimpleStoreTests
 
     void action() => store.Set(key!, value);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentNullException>(action);
   }
 
   [Fact]
@@ -26,7 +26,7 @@ public class SimpleStoreTests
 
     void action() => store.Set(key, value);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentException>(action);
   }
 
   [Fact]
@@ -38,7 +38,7 @@ public class SimpleStoreTests
 
     void action() => store.Set(key, value!);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentNullException>(action);
   }
 
   [Fact]
@@ -50,7 +50,7 @@ public class SimpleStoreTests
 
     void action() => store.Set(key, value);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentOutOfRangeException>(action);
   }
 
   [Fact]
@@ -61,7 +61,7 @@ public class SimpleStoreTests
 
     void action() => store.Get(key!);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentNullException>(action);
   }
 
   [Fact]
@@ -72,7 +72,7 @@ public class SimpleStoreTests
 
     void action() => store.Get(key);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentException>(action);
   }
 
   [Fact]
@@ -83,7 +83,7 @@ public class SimpleStoreTests
 
     void action() => store.Delete(key!);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentNullException>(action);
   }
 
   [Fact]
@@ -94,7 +94,7 @@ public class SimpleStoreTests
 
     void action() => store.Delete(key);
 
-    Assert.Throws<EmptyArgumentException>(action);
+    Assert.Throws<ArgumentException>(action);
   }
 
   [Fact]

@@ -14,24 +14,15 @@ public class SimpleStore
 
   public void Set(string key, byte[] value)
   {
-    CheckIsNullOrEmpty(key, nameof(key));
-    CheckIsNullOrEmpty(value, nameof(value));
+    ArgumentException.ThrowIfNullOrEmpty(key, nameof(key));
+    ArgumentNullException.ThrowIfNull(value, nameof(value));
+    ArgumentOutOfRangeException.ThrowIfEqual(value.Length, 0, nameof(value));
 
     void Writer() => _storage[key] = value;
 
     WriteLocked(Writer);
 
     Interlocked.Increment(ref _setCount);
-  }
-
-  static void CheckIsNullOrEmpty(string param, string paramName)
-  {
-    if (string.IsNullOrEmpty(param)) throw new EmptyArgumentException(paramName);
-  }
-
-  static void CheckIsNullOrEmpty(byte[] param, string paramName)
-  {
-    if (param == null || param.Length == 0) throw new EmptyArgumentException(paramName);
   }
 
   private void WriteLocked(Action writer)
@@ -50,7 +41,7 @@ public class SimpleStore
 
   public byte[]? Get(string key)
   {
-    CheckIsNullOrEmpty(key, nameof(key));
+    ArgumentException.ThrowIfNullOrEmpty(key, nameof(key));
 
     var value = (byte[]?)null;
 
@@ -79,7 +70,7 @@ public class SimpleStore
 
   public void Delete(string key)
   {
-    CheckIsNullOrEmpty(key, nameof(key));
+    ArgumentException.ThrowIfNullOrEmpty(key, nameof(key));
 
     void Writer() => _storage.Remove(key);
 
@@ -88,5 +79,12 @@ public class SimpleStore
     Interlocked.Increment(ref _deleteCount);
   }
 
-  public (long, long, long) GetStatistics() => (_setCount, _getCount, _deleteCount);
+  public (long, long, long) GetStatistics()
+  {
+    var setCount = Interlocked.Read(ref _setCount);
+    var getCount = Interlocked.Read(ref _getCount);
+    var deleteCount = Interlocked.Read(ref _deleteCount);
+
+    return (setCount, getCount, deleteCount);
+  }
 }
