@@ -12,4 +12,6 @@ public readonly ref struct ParsedRequest
     Key = key;
     Value = value;
   }
+
+  public bool IsEmpty() => Command.IsEmpty && Key.IsEmpty && Value.IsEmpty;
 }

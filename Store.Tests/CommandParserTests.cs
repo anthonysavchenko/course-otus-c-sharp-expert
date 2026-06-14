@@ -6,7 +6,7 @@ namespace Store.Tests;
 public class CommandParserTests
 {
   [Fact]
-  public void CorrectRequest_CommandSet()
+  public void CorrectSet()
   {
     var (command, key, value) = Parse("SET user:1 data");
 
@@ -16,7 +16,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void CorrectRequest_CommandGet()
+  public void CorrectGet()
   {
     var (command, key, value) = Parse("GET user:1");
 
@@ -26,7 +26,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectGetRequest_NoKey()
+  public void IncorrectGet_NoKey()
   {
     var (command, key, value) = Parse("GET");
 
@@ -36,7 +36,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectSetRequest_NoCommand()
+  public void IncorrectSet_NoCommand()
   {
     var (command, key, value) = Parse(" user:1 data");
 
@@ -46,7 +46,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectRequest_Empty()
+  public void Incorrect_Empty()
   {
     var (command, key, value) = Parse("");
 
@@ -56,7 +56,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectRequest_SpacesOnly()
+  public void Incorrect_SpacesOnly()
   {
     var (command, key, value) = Parse("  ");
 
@@ -66,7 +66,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectSetRequest_TooManySpacesAfterCommand()
+  public void IncorrectSet_TooManySpacesAfterCommand()
   {
     var (command, key, value) = Parse("SET        user:1 data");
 
@@ -76,7 +76,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectSetRequest_TooManySpacesAfterKey()
+  public void IncorrectSet_TooManySpacesAfterKey()
   {
     var (command, key, value) = Parse("SET user:1         data");
 
@@ -86,7 +86,7 @@ public class CommandParserTests
   }
 
   [Fact]
-  public void IncorrectGetRequest_NoKeyExtraSpace()
+  public void IncorrectGet_NoKeyExtraSpace()
   {
     var (command, key, value) = Parse("GET ");
 
