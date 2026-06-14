@@ -45,7 +45,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
 
         Console.WriteLine($"Client {clientSocket.RemoteEndPoint}. Connected");
 
-        _ = ProcessClientAsync(clientSocket, cancellationToken);
+        _ = Task.Run(() => ProcessClientAsync(clientSocket, cancellationToken), cancellationToken);
       }
     }
     catch (OperationCanceledException)
@@ -109,8 +109,15 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
   {
     var request = CommandParser.ParseBytes(message.Span);
 
-    Console.WriteLine($"Client {clientEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
-    Console.WriteLine($"Client {clientEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
-    Console.WriteLine($"Client {clientEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
+    if (!request.IsEmpty())
+    {
+      Console.WriteLine($"Client {clientEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
+      Console.WriteLine($"Client {clientEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
+      Console.WriteLine($"Client {clientEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
+    }
+    else
+    {
+      Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
+    }
   }
 }
