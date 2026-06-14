@@ -3,7 +3,14 @@ namespace Store;
 public class SimpleStore
 {
   private readonly ReaderWriterLockSlim _lock = new();
+
   private readonly Dictionary<string, byte[]> _storage = [];
+
+  private long _setCount;
+
+  private long _getCount;
+
+  private long _deleteCount;
 
   public void Set(string key, byte[] value)
   {
@@ -20,6 +27,8 @@ public class SimpleStore
     {
       _lock.ExitWriteLock();
     }
+
+    Interlocked.Increment(ref _setCount);
   }
 
   public byte[]? Get(string key)
@@ -28,14 +37,20 @@ public class SimpleStore
 
     _lock.EnterReadLock();
 
+    byte[]? value;
+
     try
     {
-      return _storage.GetValueOrDefault(key);
+      value = _storage.GetValueOrDefault(key);
     }
     finally
     {
       _lock.ExitReadLock();
     }
+
+    Interlocked.Increment(ref _getCount);
+
+    return value;
   }
 
   public void Delete(string key)
@@ -52,5 +67,9 @@ public class SimpleStore
     {
       _lock.ExitWriteLock();
     }
+
+    Interlocked.Increment(ref _deleteCount);
   }
+
+  public (long, long, long) GetStatistics() => (_setCount, _getCount, _deleteCount);
 }
