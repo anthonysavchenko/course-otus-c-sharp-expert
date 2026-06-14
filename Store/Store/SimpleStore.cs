@@ -1,4 +1,4 @@
-namespace Store;
+namespace Store.Store;
 
 public class SimpleStore
 {
@@ -14,8 +14,8 @@ public class SimpleStore
 
   public void Set(string key, byte[] value)
   {
-    if (string.IsNullOrEmpty(key)) return;
-    if (value == null || value.Length == 0) return;
+    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
+    if (value == null || value.Length == 0) throw new EmptyArgumentException(nameof(value));
 
     _lock.EnterWriteLock();
 
@@ -33,7 +33,7 @@ public class SimpleStore
 
   public byte[]? Get(string key)
   {
-    if (string.IsNullOrEmpty(key)) return null;
+    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
 
     _lock.EnterReadLock();
 
@@ -55,7 +55,7 @@ public class SimpleStore
 
   public void Delete(string key)
   {
-    if (string.IsNullOrEmpty(key)) return;
+    if (string.IsNullOrEmpty(key)) throw new EmptyArgumentException(nameof(key));
 
     _lock.EnterWriteLock();
 

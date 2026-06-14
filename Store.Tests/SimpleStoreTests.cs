@@ -1,4 +1,5 @@
 using System.Text;
+using Store.Store;
 
 namespace Store.Tests;
 
@@ -11,11 +12,9 @@ public class SimpleStoreTests
     var key = (string?)null;
     var value = GetBytes("data");
 
-    store.Set(key, value);
+    void action() => store.Set(key!, value);
 
-    var valueFromStore = store.Get(key);
-
-    Assert.Null(valueFromStore);
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
@@ -25,11 +24,9 @@ public class SimpleStoreTests
     var key = string.Empty;
     var value = GetBytes("data");
 
-    store.Set(key, value);
+    void action() => store.Set(key, value);
 
-    var valueFromStore = store.Get(key);
-
-    Assert.Null(valueFromStore);
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
@@ -39,11 +36,9 @@ public class SimpleStoreTests
     var key = "user:1";
     var value = (byte[]?)null;
 
-    store.Set(key, value);
+    void action() => store.Set(key, value!);
 
-    var valueFromStore = store.Get(key);
-
-    Assert.Null(valueFromStore);
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
@@ -53,11 +48,31 @@ public class SimpleStoreTests
     var key = "user:1";
     var value = Array.Empty<byte>();
 
-    store.Set(key, value);
+    void action() => store.Set(key, value);
 
-    var valueFromStore = store.Get(key);
+    Assert.Throws<EmptyArgumentException>(action);
+  }
 
-    Assert.Null(valueFromStore);
+  [Fact]
+  public void IncorrectGet_NullKey()
+  {
+    var store = new SimpleStore();
+    var key = (string?)null;
+
+    void action() => store.Get(key!);
+
+    Assert.Throws<EmptyArgumentException>(action);
+  }
+
+  [Fact]
+  public void IncorrectGet_EmptyKey()
+  {
+    var store = new SimpleStore();
+    var key = string.Empty;
+
+    void action() => store.Get(key);
+
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
@@ -66,9 +81,9 @@ public class SimpleStoreTests
     var store = new SimpleStore();
     var key = (string?)null;
 
-    store.Delete(key);
+    void action() => store.Delete(key!);
 
-    Assert.True(true);
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
@@ -77,9 +92,9 @@ public class SimpleStoreTests
     var store = new SimpleStore();
     var key = string.Empty;
 
-    store.Delete(key);
+    void action() => store.Delete(key);
 
-    Assert.True(true);
+    Assert.Throws<EmptyArgumentException>(action);
   }
 
   [Fact]
