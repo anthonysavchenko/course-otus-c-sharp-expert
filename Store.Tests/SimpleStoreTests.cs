@@ -117,7 +117,7 @@ public class SimpleStoreTests
   }
 
   [Fact]
-  public async Task CorrectSetGetAsync()
+  public async Task CorrectSetGetDeleteAsync()
   {
     using var store = new SimpleStore();
 
