@@ -2,8 +2,8 @@
 
 Домашние задания
 
-## 1. ✅ [Разработка ядра хранилища и zero-allocation парсера](TaskDescription/1.Parser.md)
+## 1. ✅ [Разработка ядра хранилища и zero-allocation парсера](task-description/1-parser.md)
 
-## 2. ⏳ [Каркас TCP-сервера и интеграция парсера](TaskDescription/2.TcpServer.md)
+## 2. ✅ [Каркас TCP-сервера и интеграция парсера](task-description/2-tcp-server.md)
 
-## 3. [Потокобезопасное хранилище и сбор статистики](TaskDescription/3.ThreadSafety.md)
+## 3. ⏳ [Потокобезопасное хранилище и сбор статистики](task-description/3-thread-safety.md)
