@@ -8,99 +8,99 @@ public class SimpleStoreTests
   [Fact]
   public void IncorrectSet_NullKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = (string?)null;
     var value = GetBytes("data");
 
-    void action() => store.Set(key!, value);
+    void Action() => store.Set(key!, value);
 
-    Assert.Throws<ArgumentNullException>(action);
+    Assert.Throws<ArgumentNullException>(Action);
   }
 
   [Fact]
   public void IncorrectSet_EmptyKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = string.Empty;
     var value = GetBytes("data");
 
-    void action() => store.Set(key, value);
+    void Action() => store.Set(key, value);
 
-    Assert.Throws<ArgumentException>(action);
+    Assert.Throws<ArgumentException>(Action);
   }
 
   [Fact]
   public void IncorrectSet_NullValue()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = "user:1";
     var value = (byte[]?)null;
 
-    void action() => store.Set(key, value!);
+    void Action() => store.Set(key, value!);
 
-    Assert.Throws<ArgumentNullException>(action);
+    Assert.Throws<ArgumentNullException>(Action);
   }
 
   [Fact]
   public void IncorrectSet_EmptyValue()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = "user:1";
     var value = Array.Empty<byte>();
 
-    void action() => store.Set(key, value);
+    void Action() => store.Set(key, value);
 
-    Assert.Throws<ArgumentOutOfRangeException>(action);
+    Assert.Throws<ArgumentOutOfRangeException>(Action);
   }
 
   [Fact]
   public void IncorrectGet_NullKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = (string?)null;
 
-    void action() => store.Get(key!);
+    void Action() => store.Get(key!);
 
-    Assert.Throws<ArgumentNullException>(action);
+    Assert.Throws<ArgumentNullException>(Action);
   }
 
   [Fact]
   public void IncorrectGet_EmptyKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = string.Empty;
 
-    void action() => store.Get(key);
+    void Action() => store.Get(key);
 
-    Assert.Throws<ArgumentException>(action);
+    Assert.Throws<ArgumentException>(Action);
   }
 
   [Fact]
   public void IncorrectDelete_NullKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = (string?)null;
 
-    void action() => store.Delete(key!);
+    void Action() => store.Delete(key!);
 
-    Assert.Throws<ArgumentNullException>(action);
+    Assert.Throws<ArgumentNullException>(Action);
   }
 
   [Fact]
   public void IncorrectDelete_EmptyKey()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = string.Empty;
 
-    void action() => store.Delete(key);
+    void Action() => store.Delete(key);
 
-    Assert.Throws<ArgumentException>(action);
+    Assert.Throws<ArgumentException>(Action);
   }
 
   [Fact]
   public void CorrectSetGetDelete()
   {
-    var store = new SimpleStore();
+    using var store = new SimpleStore();
     var key = "user:1";
     var value = GetBytes("data");
 
@@ -114,6 +114,25 @@ public class SimpleStoreTests
 
     Assert.Equal("data", GetString(valueFromStore));
     Assert.Null(valueFromStoreAfterDelete);
+  }
+
+  [Fact]
+  public async Task CorrectSetGetAsync()
+  {
+    using var store = new SimpleStore();
+    var key = "user:1";
+    var value = GetBytes("data");
+    var valueFromStore = (byte[]?)null;
+
+    void SetAction() => store.Set(key, value);
+    void GetFunc() => valueFromStore = store.Get(key);
+
+    var setTask = Task.Run(SetAction, TestContext.Current.CancellationToken);
+    var getTask = Task.Run(GetFunc, TestContext.Current.CancellationToken);
+
+    await Task.WhenAll([setTask, getTask]);
+
+    Assert.Equal("data", GetString(valueFromStore));
   }
 
   private static byte[] GetBytes(string requestString) => Encoding.Unicode.GetBytes(requestString);

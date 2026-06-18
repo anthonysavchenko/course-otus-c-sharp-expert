@@ -1,6 +1,6 @@
 namespace Store.Store;
 
-public class SimpleStore
+public class SimpleStore : IDisposable
 {
   private readonly ReaderWriterLockSlim _lock = new();
 
@@ -11,6 +11,8 @@ public class SimpleStore
   private long _getCount;
 
   private long _deleteCount;
+
+  private bool _disposed;
 
   public void Set(string key, byte[] value)
   {
@@ -86,5 +88,24 @@ public class SimpleStore
     var deleteCount = Interlocked.Read(ref _deleteCount);
 
     return (setCount, getCount, deleteCount);
+  }
+
+  public void Dispose()
+  {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
+  }
+
+  protected virtual void Dispose(bool disposing)
+  {
+    if (!_disposed)
+    {
+      if (disposing)
+      {
+        _lock.Dispose();
+      }
+
+      _disposed = true;
+    }
   }
 }
