@@ -21,6 +21,19 @@ public class TcpServerTests
     Assert.Contains("Server 127.0.0.1:8080. Closed", lines[7]);
   }
 
+  [Fact]
+  public async Task IncorrectSet()
+  {
+    var lines = await SendFromClentToServerAndGetConsoleOutputAsLines("SET");
+
+    Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
+    Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
+    Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
+    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received incorrect request", lines[3]);
+    Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
+    Assert.Contains("Server 127.0.0.1:8080. Closed", lines[5]);
+  }
+
   private static async Task<string[]> SendFromClentToServerAndGetConsoleOutputAsLines(string message)
   {
     using var stringWriterOutput = new StringWriter();
