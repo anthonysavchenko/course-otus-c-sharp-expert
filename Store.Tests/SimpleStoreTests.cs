@@ -120,19 +120,58 @@ public class SimpleStoreTests
   public async Task CorrectSetGetAsync()
   {
     using var store = new SimpleStore();
-    var key = "user:1";
-    var value = GetBytes("data");
-    var valueFromStore = (byte[]?)null;
 
-    void SetAction() => store.Set(key, value);
-    void GetFunc() => valueFromStore = store.Get(key);
+    var copyFromKey = "user:1";
+    var copyToKey = "user:2";
+    var value = "data";
+    var count = 10;
+    var bytes = GetBytes(value);
 
-    var setTask = Task.Run(SetAction, TestContext.Current.CancellationToken);
-    var getTask = Task.Run(GetFunc, TestContext.Current.CancellationToken);
+    store.Set(copyFromKey, bytes);
 
-    await Task.WhenAll([setTask, getTask]);
+    var tasks = ArrangeTasks(store, copyFromKey, copyToKey, count);
 
-    Assert.Equal("data", GetString(valueFromStore));
+    await Task.WhenAll(tasks);
+
+    var valueFromStoreCopyFrom = store.Get(copyFromKey);
+
+    Assert.Equal(value, GetString(valueFromStoreCopyFrom));
+
+    var valueFromStoreCopyTo = store.Get(copyToKey);
+
+    Assert.Equal(value, GetString(valueFromStoreCopyTo));
+
+    store.Delete(copyFromKey);
+    store.Delete(copyToKey);
+
+    var (setCount, getCount, deleteCount) = store.GetStatistics();
+
+    Assert.Equal(count + 1, setCount);
+    Assert.Equal(count + 2, getCount);
+    Assert.Equal(2, deleteCount);
+  }
+
+  public IEnumerable<Task> ArrangeTasks(SimpleStore store, string copyFromKey, string copyToKey, int count)
+  {
+    var tasks = new List<Task>();
+
+    void Action() => CopyStoreValue(store, copyFromKey, copyToKey);
+
+    for (int i = 0; i < count; i++)
+    {
+      var task = Task.Run(Action, TestContext.Current.CancellationToken);
+
+      tasks.Add(task);
+    }
+
+    return tasks;
+  }
+
+  private static void CopyStoreValue(SimpleStore store, string copyFromKey, string copyToKey)
+  {
+    var value = store.Get(copyFromKey);
+
+    store.Set(copyToKey, value!);
   }
 
   private static byte[] GetBytes(string requestString) => Encoding.Unicode.GetBytes(requestString);
