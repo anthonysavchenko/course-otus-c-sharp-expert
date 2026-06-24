@@ -3,17 +3,22 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Store.Parser;
+using Store.Store;
 
 namespace Store;
 
 // TODO: перенести serverSocket в поле класса, реализовать IDisposabel и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
 
-public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
+public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes, SimpleStore store) : IDisposable
 {
   private readonly IPEndPoint _endPoint = new(ipAddress, port);
 
   private readonly int _clientMessageMinBytes = clientMessageMinBytes;
+
+  private readonly SimpleStore _store = store;
+
+  private bool disposed;
 
   public async Task StartAsync(CancellationToken cancellationToken = default)
   {
@@ -119,5 +124,24 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes)
     {
       Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
     }
+  }
+
+  protected virtual void Dispose(bool disposing)
+  {
+    if (!disposed)
+    {
+      if (disposing)
+      {
+        _store.Dispose();
+      }
+
+      disposed = true;
+    }
+  }
+
+  public void Dispose()
+  {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
   }
 }
