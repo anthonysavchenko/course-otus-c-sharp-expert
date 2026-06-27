@@ -122,7 +122,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
     if (request.IsEmpty())
     {
-      Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
+      Console.WriteLine($"Client {clientEndPoint}. Received incorrect command");
 
       return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
     }
@@ -138,14 +138,14 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
           if (value.Length == 0)
           {
-            Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
+            Console.WriteLine($"Client {clientEndPoint}. Received incorrect command");
 
             return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
           }
 
           _store.Set(key, value);
 
-          Console.WriteLine($"Client {clientEndPoint}. Received Command: SET {key} {CommandParser.GetString(value)}");
+          Console.WriteLine($"Client {clientEndPoint}. Received command: SET {key} {CommandParser.GetString(value)}");
 
           return CommandParser.GetBytes($"OK{Environment.NewLine}");
         }
@@ -153,7 +153,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
         {
           var value = _store.Get(key);
 
-          Console.WriteLine($"Client {clientEndPoint}. Received Command: GET {key} {value}");
+          Console.WriteLine($"Client {clientEndPoint}. Received command: GET {key} {CommandParser.GetString(value)}");
 
           return value ?? CommandParser.GetBytes($"NULL{Environment.NewLine}");
         }
@@ -161,7 +161,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
         {
           _store.Delete(key);
 
-          Console.WriteLine($"Client {clientEndPoint}. Received Command: DEL {key}");
+          Console.WriteLine($"Client {clientEndPoint}. Received command: DEL {key}");
 
           return CommandParser.GetBytes($"OK{Environment.NewLine}");
         }

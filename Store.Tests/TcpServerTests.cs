@@ -10,30 +10,42 @@ public class TcpServerTests
   [Fact]
   public async Task CorrectSet()
   {
-    var lines = await SendFromClentToServerAndGetConsoleOutputAsLines("SET user:1 data");
+    var lines = await SendFromClentToServerAndGetConsoleOutputAsLines(["SET user:1 data", "GET user:1", "DEL user:1"]);
 
     Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
     Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
+
     Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
-    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received Command: SET user:1 data", lines[3]);
+    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received command: SET user:1 data", lines[3]);
     Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
-    Assert.Contains("Server 127.0.0.1:8080. Closed", lines[5]);
+
+    Assert.Contains("Client 127.0.0.1", lines[5]); Assert.Contains("Connected", lines[5]);
+    Assert.Contains("Client 127.0.0.1", lines[6]); Assert.Contains("Received command: GET user:1 data", lines[6]);
+    Assert.Contains("Client 127.0.0.1", lines[7]); Assert.Contains("Disconnected", lines[7]);
+
+    Assert.Contains("Client 127.0.0.1", lines[8]); Assert.Contains("Connected", lines[8]);
+    Assert.Contains("Client 127.0.0.1", lines[9]); Assert.Contains("Received command: DEL user:1", lines[9]);
+    Assert.Contains("Client 127.0.0.1", lines[10]); Assert.Contains("Disconnected", lines[10]);
+
+    Assert.Contains("Server 127.0.0.1:8080. Closed", lines[11]);
   }
 
   [Fact]
   public async Task IncorrectSet()
   {
-    var lines = await SendFromClentToServerAndGetConsoleOutputAsLines("SET");
+    var lines = await SendFromClentToServerAndGetConsoleOutputAsLines(["SET"]);
 
     Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
     Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
+
     Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
-    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received incorrect request", lines[3]);
+    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received incorrect command", lines[3]);
     Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
+
     Assert.Contains("Server 127.0.0.1:8080. Closed", lines[5]);
   }
 
-  private static async Task<string[]> SendFromClentToServerAndGetConsoleOutputAsLines(string message)
+  private static async Task<string[]> SendFromClentToServerAndGetConsoleOutputAsLines(string[] messages)
   {
     using var stringWriterOutput = new StringWriter();
     var originalOutput = Console.Out;
@@ -42,7 +54,7 @@ public class TcpServerTests
 
     try
     {
-      await SendFromClientToServer(message);
+      await SendFromClientToServer(messages);
     }
     finally
     {
@@ -55,7 +67,7 @@ public class TcpServerTests
     return lines;
   }
 
-  private static async Task SendFromClientToServer(string message)
+  private static async Task SendFromClientToServer(string[] messages)
   {
     var ipAddress = IPAddress.Parse("127.0.0.1");
     var port = 8080;
@@ -71,10 +83,13 @@ public class TcpServerTests
 
     var serverEndPoint = new IPEndPoint(ipAddress, port);
 
-    await SendFromClient(message, serverEndPoint, cancellationToken);
+    foreach (var message in messages)
+    {
+      await SendFromClient(message, serverEndPoint, cancellationToken);
 
-    // Ждем перед завершением работы сервера, чтобы он успевал обработать данные клиента
-    await Task.Delay(1000);
+      // Даем возможность серверу обработать данные клиента и записать лог в консоль
+      await Task.Delay(1000);
+    }
 
     await cancellationTokenSource.CancelAsync();
 
@@ -88,6 +103,10 @@ public class TcpServerTests
 
     await client.ConnectAsync(serverEndPoint, cancellationToken);
     await client.SendAsync(CommandParser.GetBytes(message), SocketFlags.None, cancellationToken);
+
+    var response = new byte[64];
+
+    await client.ReceiveAsync(response, SocketFlags.None, cancellationToken);
     await client.DisconnectAsync(reuseSocket: false, cancellationToken);
 
     client.Shutdown(SocketShutdown.Both);
