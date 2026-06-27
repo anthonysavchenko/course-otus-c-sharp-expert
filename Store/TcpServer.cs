@@ -86,7 +86,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
       {
         var clientEndPoint = clientSocket.RemoteEndPoint;
 
-        clientSocket.Shutdown(SocketShutdown.Both);
+        if (clientSocket.Connected) clientSocket.Shutdown(SocketShutdown.Both);
         clientSocket.Close();
         Console.WriteLine($"Client {clientEndPoint}. Disconnected");
       }
@@ -103,7 +103,9 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
       if (bytesReceived != 0)
       {
-        ProcessClientMessage(buffer.AsMemory(0, bytesReceived), clientSocket.RemoteEndPoint);
+        var response = ProcessClientMessage(buffer.AsMemory(0, bytesReceived), clientSocket.RemoteEndPoint);
+
+        await clientSocket.SendAsync(response, SocketFlags.None, cancellationToken);
       }
 
       return bytesReceived;
@@ -114,7 +116,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
     }
   }
 
-  private void ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
+  private byte[] ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
   {
     var request = CommandParser.ParseBytes(message.Span);
 
@@ -122,7 +124,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
     {
       Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
 
-      return;
+      return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
     }
 
     var commandType = CommandParser.GetString(request.Command).ToLowerInvariant();
@@ -138,14 +140,14 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
           {
             Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
 
-            return;
+            return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
           }
 
           _store.Set(key, value);
 
           Console.WriteLine($"Client {clientEndPoint}. Received Command: SET {key} {CommandParser.GetString(value)}");
 
-          break;
+          return CommandParser.GetBytes($"OK{Environment.NewLine}");
         }
       case CommandParser.GetCommandType:
         {
@@ -153,7 +155,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
           Console.WriteLine($"Client {clientEndPoint}. Received Command: GET {key} {value}");
 
-          break;
+          return value ?? CommandParser.GetBytes($"NULL{Environment.NewLine}");
         }
       case CommandParser.DeleteCommandType:
         {
@@ -161,7 +163,11 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
           Console.WriteLine($"Client {clientEndPoint}. Received Command: DEL {key}");
 
-          break;
+          return CommandParser.GetBytes($"OK{Environment.NewLine}");
+        }
+      default:
+        {
+          return CommandParser.GetBytes($"ERR Unknown command{Environment.NewLine}");
         }
     }
   }
