@@ -97,19 +97,15 @@ public class CommandParserTests
 
   private static (string, string, string) Parse(string requestString)
   {
-    var bytes = GetBytes(requestString);
+    var bytes = CommandParser.GetBytes(requestString);
     var parsedRequest = CommandParser.ParseBytes(bytes);
 
     return GetStrings(parsedRequest);
   }
 
-  private static byte[] GetBytes(string requestString) => Encoding.Unicode.GetBytes(requestString);
-
-  private static string GetString(ReadOnlySpan<byte> bytes) => Encoding.Unicode.GetString(bytes);
-
   private static (string, string, string) GetStrings(ParsedRequest parsedRequest) => (
-    GetString(parsedRequest.Command),
-    GetString(parsedRequest.Key),
-    GetString(parsedRequest.Value)
+    CommandParser.GetString(parsedRequest.Command),
+    CommandParser.GetString(parsedRequest.Key),
+    CommandParser.GetString(parsedRequest.Value)
   );
 }

@@ -4,7 +4,17 @@ namespace Store.Parser;
 
 public static class CommandParser
 {
-  private static readonly byte[] _separator = Encoding.Unicode.GetBytes([' ']);
+  public const string SetCommandType = "set";
+
+  public const string GetCommandType = "get";
+
+  public const string DeleteCommandType = "del";
+
+  public static string GetString(ReadOnlySpan<byte> input) => Encoding.UTF8.GetString(input);
+
+  public static byte[] GetBytes(string input) => Encoding.UTF8.GetBytes(input);
+
+  private static readonly byte[] _separator = GetBytes(" ");
 
   public static ParsedRequest ParseBytes(ReadOnlySpan<byte> bytes)
   {

@@ -1,14 +1,18 @@
 using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Store.Parser;
 using Store.Store;
 
 namespace Store;
 
-// TODO: перенести serverSocket в поле класса, реализовать IDisposabel и вынести ServerSocketInit
+// TODO: перенести serverSocket в поле класса и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
+// TODO: успростить метод ProcessClientMessage
+// TODO: переименовать ParsedRequest в Command
+// TODO: вынести в отдельную папку Server, переименовать Store, чтобы не было две одинаковые папки
+// TODO: использовать внутри TcpServer хранилище через интерфейс IStore
+// TODO: сократить количество параметров конструктора TcpServer
 
 public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes, SimpleStore store) : IDisposable
 {
@@ -110,19 +114,55 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
     }
   }
 
-  private static void ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
+  private void ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
   {
     var request = CommandParser.ParseBytes(message.Span);
 
-    if (!request.IsEmpty())
-    {
-      Console.WriteLine($"Client {clientEndPoint}. Received Command: {Encoding.Unicode.GetString(request.Command)}");
-      Console.WriteLine($"Client {clientEndPoint}. Received Key: {Encoding.Unicode.GetString(request.Key)}");
-      Console.WriteLine($"Client {clientEndPoint}. Received Value: {Encoding.Unicode.GetString(request.Value)}");
-    }
-    else
+    if (request.IsEmpty())
     {
       Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
+
+      return;
+    }
+
+    var commandType = CommandParser.GetString(request.Command).ToLowerInvariant();
+    var key = CommandParser.GetString(request.Key);
+
+    switch (commandType)
+    {
+      case CommandParser.SetCommandType:
+        {
+          var value = request.Value.ToArray();
+
+          if (value.Length == 0)
+          {
+            Console.WriteLine($"Client {clientEndPoint}. Received incorrect request");
+
+            return;
+          }
+
+          _store.Set(key, value);
+
+          Console.WriteLine($"Client {clientEndPoint}. Received Command: SET {key} {CommandParser.GetString(value)}");
+
+          break;
+        }
+      case CommandParser.GetCommandType:
+        {
+          var value = _store.Get(key);
+
+          Console.WriteLine($"Client {clientEndPoint}. Received Command: GET {key} {value}");
+
+          break;
+        }
+      case CommandParser.DeleteCommandType:
+        {
+          _store.Delete(key);
+
+          Console.WriteLine($"Client {clientEndPoint}. Received Command: DEL {key}");
+
+          break;
+        }
     }
   }
 

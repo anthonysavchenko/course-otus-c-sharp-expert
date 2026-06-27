@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using Store.Parser;
 using Store.Store;
 
 namespace Store.Tests;
@@ -15,11 +15,9 @@ public class TcpServerTests
     Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
     Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
     Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
-    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received Command: SET", lines[3]);
-    Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Received Key: user:1", lines[4]);
-    Assert.Contains("Client 127.0.0.1", lines[5]); Assert.Contains("Received Value: data", lines[5]);
-    Assert.Contains("Client 127.0.0.1", lines[6]); Assert.Contains("Disconnected", lines[6]);
-    Assert.Contains("Server 127.0.0.1:8080. Closed", lines[7]);
+    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received Command: SET user:1 data", lines[3]);
+    Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
+    Assert.Contains("Server 127.0.0.1:8080. Closed", lines[5]);
   }
 
   [Fact]
@@ -44,7 +42,7 @@ public class TcpServerTests
 
     try
     {
-      await Task.Run(() => SendFromClientToServer(message));
+      await SendFromClientToServer(message);
     }
     finally
     {
@@ -89,7 +87,7 @@ public class TcpServerTests
     using var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
 
     await client.ConnectAsync(serverEndPoint, cancellationToken);
-    await client.SendAsync(Encoding.Unicode.GetBytes(message), SocketFlags.None, cancellationToken);
+    await client.SendAsync(CommandParser.GetBytes(message), SocketFlags.None, cancellationToken);
     await client.DisconnectAsync(reuseSocket: false, cancellationToken);
 
     client.Shutdown(SocketShutdown.Both);
