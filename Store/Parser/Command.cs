@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Store.Parser;
 
-public readonly ref struct ParsedRequest
+public readonly ref struct Command
 {
   private readonly ReadOnlySpan<byte> _commandType;
 
@@ -25,7 +25,7 @@ public readonly ref struct ParsedRequest
     get => _value.ToArray();
   }
 
-  public ParsedRequest(ReadOnlySpan<byte> commandType, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+  public Command(ReadOnlySpan<byte> commandType, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
   {
     _commandType = commandType;
     _key = key;

@@ -16,21 +16,21 @@ public static class CommandParser
 
   private static readonly byte[] _separator = GetBytes(" ");
 
-  public static ParsedRequest ParseBytes(ReadOnlySpan<byte> bytes)
+  public static Command ParseBytes(ReadOnlySpan<byte> bytes)
   {
-    var parsedCommand = SliceFirstToken(bytes);
-    var parsedKey = SliceFirstToken(parsedCommand.Rest);
+    var parsedCommandType = SliceFirstToken(bytes);
+    var parsedKey = SliceFirstToken(parsedCommandType.Rest);
     var parsedValue = SliceFirstToken(parsedKey.Rest);
 
-    var command = parsedCommand.FirstToken;
+    var commandType = parsedCommandType.FirstToken;
     var key = parsedKey.FirstToken;
     var value = parsedValue.FirstToken;
 
-    if (command.IsEmpty || key.IsEmpty) return new ParsedRequest(commandType: [], key: [], value: []);
+    if (commandType.IsEmpty || key.IsEmpty) return new Command(commandType: [], key: [], value: []);
 
-    var parsedRequest = new ParsedRequest(command, key, value);
+    var command = new Command(commandType, key, value);
 
-    return parsedRequest;
+    return command;
   }
 
   private static SlicedFirstToken SliceFirstToken(ReadOnlySpan<byte> bytes)

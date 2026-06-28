@@ -8,11 +8,11 @@ namespace Store;
 
 // TODO: перенести serverSocket в поле класса и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
-// TODO: переименовать ParsedRequest в Command
 // TODO: вынести в отдельную папку Server, переименовать Store, чтобы не было две одинаковые папки
 // TODO: использовать внутри TcpServer хранилище через интерфейс IStore
 // TODO: сократить количество параметров конструктора TcpServer
 // TODO: вынести Encoding.UTF8.GetString в Utils
+// TODO: выделить ядро
 
 public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes, SimpleStore store) : IDisposable
 {
@@ -132,7 +132,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
     return response;
   }
 
-  private byte[] ApplyCommandToStore(ParsedRequest command)
+  private byte[] ApplyCommandToStore(Command command)
   {
     if (string.IsNullOrEmpty(command.CommandType)) return UnknownCommandResponse;
     if (string.IsNullOrEmpty(command.Key)) return UnknownCommandResponse;
@@ -160,7 +160,7 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
     }
   }
 
-  private static void LogClientMessage(EndPoint? clientEndPoint, ParsedRequest command, byte[] response)
+  private static void LogClientMessage(EndPoint? clientEndPoint, Command command, byte[] response)
   {
     var log = $"Client {clientEndPoint}. Received command type: {command.CommandType}, key: {command.Key}";
 
