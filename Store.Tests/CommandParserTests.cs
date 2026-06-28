@@ -104,8 +104,8 @@ public class CommandParserTests
   }
 
   private static (string, string, string) GetStrings(ParsedRequest parsedRequest) => (
-    CommandParser.GetString(parsedRequest.Command),
-    CommandParser.GetString(parsedRequest.Key),
+    parsedRequest.CommandType,
+    parsedRequest.Key,
     CommandParser.GetString(parsedRequest.Value)
   );
 }

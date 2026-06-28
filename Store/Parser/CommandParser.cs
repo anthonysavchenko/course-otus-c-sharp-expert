@@ -4,11 +4,11 @@ namespace Store.Parser;
 
 public static class CommandParser
 {
-  public const string SetCommandType = "set";
+  public const string SetCommandType = "SET";
 
-  public const string GetCommandType = "get";
+  public const string GetCommandType = "GET";
 
-  public const string DeleteCommandType = "del";
+  public const string DeleteCommandType = "DEL";
 
   public static string GetString(ReadOnlySpan<byte> input) => Encoding.UTF8.GetString(input);
 
@@ -26,7 +26,7 @@ public static class CommandParser
     var key = parsedKey.FirstToken;
     var value = parsedValue.FirstToken;
 
-    if (command.IsEmpty || key.IsEmpty) return new ParsedRequest(command: [], key: [], value: []);
+    if (command.IsEmpty || key.IsEmpty) return new ParsedRequest(commandType: [], key: [], value: []);
 
     var parsedRequest = new ParsedRequest(command, key, value);
 

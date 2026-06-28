@@ -1,17 +1,34 @@
+using System.Text;
+
 namespace Store.Parser;
 
 public readonly ref struct ParsedRequest
 {
-  public readonly ReadOnlySpan<byte> Command;
-  public readonly ReadOnlySpan<byte> Key;
-  public readonly ReadOnlySpan<byte> Value;
+  private readonly ReadOnlySpan<byte> _commandType;
 
-  public ParsedRequest(ReadOnlySpan<byte> command, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+  private readonly ReadOnlySpan<byte> _key;
+
+  private readonly ReadOnlySpan<byte> _value;
+
+  public readonly string CommandType
   {
-    Command = command;
-    Key = key;
-    Value = value;
+    get => Encoding.UTF8.GetString(_commandType).ToUpperInvariant();
   }
 
-  public bool IsEmpty() => Command.IsEmpty && Key.IsEmpty && Value.IsEmpty;
+  public readonly string Key
+  {
+    get => Encoding.UTF8.GetString(_key);
+  }
+
+  public readonly byte[] Value
+  {
+    get => _value.ToArray();
+  }
+
+  public ParsedRequest(ReadOnlySpan<byte> commandType, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+  {
+    _commandType = commandType;
+    _key = key;
+    _value = value;
+  }
 }

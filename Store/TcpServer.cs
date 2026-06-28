@@ -8,11 +8,11 @@ namespace Store;
 
 // TODO: перенести serverSocket в поле класса и вынести ServerSocketInit
 // TODO: сделать возможность выключать запись в консоль
-// TODO: успростить метод ProcessClientMessage
 // TODO: переименовать ParsedRequest в Command
 // TODO: вынести в отдельную папку Server, переименовать Store, чтобы не было две одинаковые папки
 // TODO: использовать внутри TcpServer хранилище через интерфейс IStore
 // TODO: сократить количество параметров конструктора TcpServer
+// TODO: вынести Encoding.UTF8.GetString в Utils
 
 public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes, SimpleStore store) : IDisposable
 {
@@ -21,6 +21,12 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
   private readonly int _clientMessageMinBytes = clientMessageMinBytes;
 
   private readonly SimpleStore _store = store;
+
+  private static readonly byte[] OkResponse = CommandParser.GetBytes($"OK{Environment.NewLine}");
+
+  private static readonly byte[] NullResponse = CommandParser.GetBytes($"NULL{Environment.NewLine}");
+
+  private static readonly byte[] UnknownCommandResponse = CommandParser.GetBytes($"ERR Unknown command{Environment.NewLine}");
 
   private bool disposed;
 
@@ -118,58 +124,51 @@ public class TcpServer(IPAddress ipAddress, int port, int clientMessageMinBytes,
 
   private byte[] ProcessClientMessage(ReadOnlyMemory<byte> message, EndPoint? clientEndPoint)
   {
-    var request = CommandParser.ParseBytes(message.Span);
+    var command = CommandParser.ParseBytes(message.Span);
+    var response = ApplyCommandToStore(command);
 
-    if (request.IsEmpty())
-    {
-      Console.WriteLine($"Client {clientEndPoint}. Received incorrect command");
+    LogClientMessage(clientEndPoint, command, response);
 
-      return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
-    }
+    return response;
+  }
 
-    var commandType = CommandParser.GetString(request.Command).ToLowerInvariant();
-    var key = CommandParser.GetString(request.Key);
+  private byte[] ApplyCommandToStore(ParsedRequest command)
+  {
+    if (string.IsNullOrEmpty(command.CommandType)) return UnknownCommandResponse;
+    if (string.IsNullOrEmpty(command.Key)) return UnknownCommandResponse;
+    if (command.CommandType == CommandParser.SetCommandType && command.Value.Length == 0) return UnknownCommandResponse;
 
-    switch (commandType)
+    switch (command.CommandType)
     {
       case CommandParser.SetCommandType:
-        {
-          var value = request.Value.ToArray();
+        _store.Set(command.Key, command.Value);
 
-          if (value.Length == 0)
-          {
-            Console.WriteLine($"Client {clientEndPoint}. Received incorrect command");
+        return OkResponse;
 
-            return CommandParser.GetBytes($"ERR Incorrect command{Environment.NewLine}");
-          }
-
-          _store.Set(key, value);
-
-          Console.WriteLine($"Client {clientEndPoint}. Received command: SET {key} {CommandParser.GetString(value)}");
-
-          return CommandParser.GetBytes($"OK{Environment.NewLine}");
-        }
       case CommandParser.GetCommandType:
-        {
-          var value = _store.Get(key);
+        var value = _store.Get(command.Key);
 
-          Console.WriteLine($"Client {clientEndPoint}. Received command: GET {key} {CommandParser.GetString(value)}");
+        return value ?? NullResponse;
 
-          return value ?? CommandParser.GetBytes($"NULL{Environment.NewLine}");
-        }
       case CommandParser.DeleteCommandType:
-        {
-          _store.Delete(key);
+        _store.Delete(command.Key);
 
-          Console.WriteLine($"Client {clientEndPoint}. Received command: DEL {key}");
+        return OkResponse;
 
-          return CommandParser.GetBytes($"OK{Environment.NewLine}");
-        }
       default:
-        {
-          return CommandParser.GetBytes($"ERR Unknown command{Environment.NewLine}");
-        }
+        return UnknownCommandResponse;
     }
+  }
+
+  private static void LogClientMessage(EndPoint? clientEndPoint, ParsedRequest command, byte[] response)
+  {
+    var log = $"Client {clientEndPoint}. Received command type: {command.CommandType}, key: {command.Key}";
+
+    if (command.CommandType == CommandParser.SetCommandType) log += $", value: {CommandParser.GetString(command.Value)}";
+
+    log += $". Response sent: {CommandParser.GetString(response).Replace(Environment.NewLine, "")}.";
+
+    Console.WriteLine(log);
   }
 
   protected virtual void Dispose(bool disposing)

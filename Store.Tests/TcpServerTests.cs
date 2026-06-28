@@ -15,17 +15,32 @@ public class TcpServerTests
     Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
     Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
 
-    Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
-    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received command: SET user:1 data", lines[3]);
-    Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
+    Assert.Contains("Client 127.0.0.1", lines[2]);
+    Assert.Contains("Connected", lines[2]);
 
-    Assert.Contains("Client 127.0.0.1", lines[5]); Assert.Contains("Connected", lines[5]);
-    Assert.Contains("Client 127.0.0.1", lines[6]); Assert.Contains("Received command: GET user:1 data", lines[6]);
-    Assert.Contains("Client 127.0.0.1", lines[7]); Assert.Contains("Disconnected", lines[7]);
+    Assert.Contains("Client 127.0.0.1", lines[3]);
+    Assert.Contains("Received command type: SET, key: user:1, value: data. Response sent: OK.", lines[3]);
 
-    Assert.Contains("Client 127.0.0.1", lines[8]); Assert.Contains("Connected", lines[8]);
-    Assert.Contains("Client 127.0.0.1", lines[9]); Assert.Contains("Received command: DEL user:1", lines[9]);
-    Assert.Contains("Client 127.0.0.1", lines[10]); Assert.Contains("Disconnected", lines[10]);
+    Assert.Contains("Client 127.0.0.1", lines[4]);
+    Assert.Contains("Disconnected", lines[4]);
+
+    Assert.Contains("Client 127.0.0.1", lines[5]);
+    Assert.Contains("Connected", lines[5]);
+
+    Assert.Contains("Client 127.0.0.1", lines[6]);
+    Assert.Contains("Received command type: GET, key: user:1. Response sent: data.", lines[6]);
+
+    Assert.Contains("Client 127.0.0.1", lines[7]);
+    Assert.Contains("Disconnected", lines[7]);
+
+    Assert.Contains("Client 127.0.0.1", lines[8]);
+    Assert.Contains("Connected", lines[8]);
+
+    Assert.Contains("Client 127.0.0.1", lines[9]);
+    Assert.Contains("Received command type: DEL, key: user:1. Response sent: OK.", lines[9]);
+
+    Assert.Contains("Client 127.0.0.1", lines[10]);
+    Assert.Contains("Disconnected", lines[10]);
 
     Assert.Contains("Server 127.0.0.1:8080. Closed", lines[11]);
   }
@@ -38,9 +53,14 @@ public class TcpServerTests
     Assert.Contains("Server 127.0.0.1:8080. Started", lines[0]);
     Assert.Contains("Client message min bytes for ArrayPool: 64", lines[1]);
 
-    Assert.Contains("Client 127.0.0.1", lines[2]); Assert.Contains("Connected", lines[2]);
-    Assert.Contains("Client 127.0.0.1", lines[3]); Assert.Contains("Received incorrect command", lines[3]);
-    Assert.Contains("Client 127.0.0.1", lines[4]); Assert.Contains("Disconnected", lines[4]);
+    Assert.Contains("Client 127.0.0.1", lines[2]);
+    Assert.Contains("Connected", lines[2]);
+
+    Assert.Contains("Client 127.0.0.1", lines[3]);
+    Assert.Contains("Received command type: , key: . Response sent: ERR Unknown command.", lines[3]);
+
+    Assert.Contains("Client 127.0.0.1", lines[4]);
+    Assert.Contains("Disconnected", lines[4]);
 
     Assert.Contains("Server 127.0.0.1:8080. Closed", lines[5]);
   }
